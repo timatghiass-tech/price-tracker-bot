@@ -1,45 +1,45 @@
 # 🛒 Price Tracker & E-Commerce Catalog Scraper Bot
 
-Um robô automatizado de web scraping, monitoramento contínuo de preços e extração de catálogos e-commerce desenvolvido com **Node.js** e **Puppeteer**.
+An automated web scraping, continuous price monitoring, and e-commerce catalog extraction bot built with Node.js and Puppeteer.
 
 ---
 
-## 🚀 Funcionalidades Principais
+## 🚀 Key Features
 
-- **Monitoramento Contínuo de Preços (`tracker.js`):**
-  - Checagem automática e periódica em intervalos programados via polling assíncrono.
-  - Alerta imediato no console assim que o preço atinge o gatilho financeiro estipulado.
-  - Gerenciamento inteligente de instâncias e abas do navegador para otimização de memória RAM.
+### Real-Time Price Monitoring (`tracker.js`)
+* **Continuous Polling:** Automated periodic checks at configurable intervals using asynchronous polling.
+* **Instant Threshold Alerts:** Immediate console triggers and logs as soon as the target price drop threshold is met.
+* **Resource Optimization:** Efficient browser instance and tab management to minimize memory overhead.
 
-- **Extração Completa de Catálogos (`catalog_scraper.js`):**
-  - Navegação automatizada multi-página (paginação dinâmica com identificação de link do botão *Next*).
-  - Extração de múltiplos campos por produto: Título, Preço, Disponibilidade em estoque e Capa.
-  - Pipeline de mídia automático: download assíncrono das imagens em pasta local dedicada (`imagens/`).
-  - Exportação estruturada pronta para consumo: **JSON** estruturado e **CSV** otimizado para o Excel (UTF-8 com BOM e delimitadores corretos).
+### Full Catalog Extraction (`catalog_scraper.js`)
+* **Dynamic Multi-Page Pagination:** Automated traversal across multiple pages handling dynamic "Next" page navigation.
+* **Rich Data Parsing:** Extracts key product fields including Title, Price, Stock Availability, and Image URLs.
+* **Automated Media Pipeline:** Asynchronous binary image streaming and downloads directly into a local directory (`imagens/`).
+* **Structured Multi-Format Exports:** Generates ready-to-use structured JSON and Excel-ready CSV (encoded with UTF-8 BOM and standard delimiters).
 
-- **Evasão Anti-Bot & Camuflagem:**
-  - Desativação da flag de controle de automação do Blink (`--disable-blink-features=AutomationControlled`).
-  - Cabeçalhos de requisição e `User-Agent` reais simulando navegação humana em ambiente Desktop Windows.
-  - Resolução de viewport padronizada (1920x1080).
+### Anti-Bot Stealth & Evasion
+* **Automation Flag Suppression:** Disables Blink automation indicators (`--disable-blink-features=AutomationControlled`).
+* **Synthetic Browser Fingerprint:** Authentic Desktop Windows User-Agent and realistic request headers.
+* **Standardized Viewport:** Preset 1920x1080 display resolution to emulate real human browsing.
 
-- **Boas Práticas de Engenharia e Versionamento:**
-  - Gerenciamento limpo com `.gitignore` (exclusão de binários, cache, mídias baixadas e `node_modules`).
-  - Repositório enxuto e reprodutível.
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Runtime:** Node.js
-- **Automação Headless:** Puppeteer
-- **Rede & Stream:** Node.js native `https` & `fs`
-- **Controle de Versão:** Git & GitHub
+### Engineering Standards & Version Control
+* **Clean Repository Architecture:** Configured `.gitignore` isolating dependencies, downloaded media assets, and runtime artifacts.
+* **Reproducible Deployment:** Lightweight, clean, and reliable codebase.
 
 ---
 
-## 📦 Como Instalar e Rodar
+## 🛠️ Tech Stack
 
-1. Clone o repositório:
+* **Runtime:** Node.js
+* **Browser Automation:** Puppeteer
+* **Networking & Streams:** Native Node.js `https` & `fs`
+* **Version Control:** Git & GitHub
+
+---
+
+## 📦 Getting Started
+
+### 1. Clone the repository
 ```bash
 git clone [https://github.com/timatghiass-tech/price-tracker-bot.git](https://github.com/timatghiass-tech/price-tracker-bot.git)
 cd price-tracker-bot

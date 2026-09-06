@@ -12,12 +12,13 @@ function downloadImage(url, filepath) {
         res.pipe(stream);
         stream.on('finish', () => resolve(filepath));
       } else {
-        reject(new Error(`Falha no download da imagem: status ${res.statusCode}`));
+        reject(new Error(`Falha no download: status ${res.statusCode}`));
       }
     }).on('error', reject);
   });
 }
 
+// Função para exportar os dados em CSV (Excel)
 function exportToCSV(data, filename) {
   const headers = ['ID', 'Titulo', 'Preco', 'Disponibilidade', 'Arquivo_Imagem'];
   const rows = data.map((item) => {
@@ -33,7 +34,7 @@ async function scrapeFullCatalog() {
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
-  // Garante que o diretório de imagens existe
+  // Cria a pasta imagens/ se ela ainda não existir
   const imagesDir = path.join(__dirname, 'imagens');
   if (!fs.existsSync(imagesDir)) {
     fs.mkdirSync(imagesDir);
@@ -41,13 +42,14 @@ async function scrapeFullCatalog() {
 
   let currentPageUrl = 'https://books.toscrape.com/';
   const allBooks = [];
-  const maxPages = 2; // Limitado a 2 páginas para testar o download rapidamente (40 fotos)
+  const maxPages = 2; // Teste rápido em 2 páginas (40 produtos e 40 imagens baixadas)
   let pageCount = 1;
 
   while (currentPageUrl && pageCount <= maxPages) {
     console.log(`\n--- Raspando página ${pageCount}: ${currentPageUrl} ---`);
     await page.goto(currentPageUrl, { waitUntil: 'networkidle2' });
 
+    // Coleta dados e o link da capa de cada produto
     const booksOnPage = await page.$$eval('.product_pod', (elements) => {
       return elements.map((el) => {
         const title = el.querySelector('h3 a')?.getAttribute('title') || 'Sem título';
@@ -60,11 +62,11 @@ async function scrapeFullCatalog() {
       });
     });
 
+    // Baixa cada foto e vincula ao objeto do livro
     for (let i = 0; i < booksOnPage.length; i++) {
       const item = booksOnPage[i];
       const itemIndex = allBooks.length + 1;
-      
-      // Resolve a URL da imagem para absoluta
+
       const imageUrl = new URL(item.imgRelativeSrc, page.url()).href;
       const fileName = `produto_${String(itemIndex).padStart(3, '0')}.jpg`;
       const localFilePath = path.join(imagesDir, fileName);
@@ -85,8 +87,9 @@ async function scrapeFullCatalog() {
       });
     }
 
-    console.log(`Página ${pageCount} finalizada! Itens acumulados: ${allBooks.length}`);
+    console.log(`Página ${pageCount} concluída! Total até agora: ${allBooks.length} produtos.`);
 
+    // Avança para a próxima página se houver
     const nextButton = await page.$('.pager .next a');
     if (nextButton) {
       const nextHref = await page.$eval('.pager .next a', (el) => el.getAttribute('href'));
@@ -97,13 +100,14 @@ async function scrapeFullCatalog() {
     }
   }
 
-  console.log(`\nTotal geral de produtos processados: ${allBooks.length}`);
+  console.log(`\nProcessamento finalizado! Total de itens: ${allBooks.length}`);
 
+  // Salva arquivos locais
   fs.writeFileSync('produtos.json', JSON.stringify(allBooks, null, 2), 'utf-8');
-  console.log('Arquivo produtos.json atualizado!');
+  console.log('produtos.json atualizado.');
 
   exportToCSV(allBooks, 'produtos.csv');
-  console.log('Planilha produtos.csv atualizada com as referências das imagens!');
+  console.log('produtos.csv atualizado com os links locais das capas.');
 
   await browser.close();
 }

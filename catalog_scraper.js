@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-// Função auxiliar para baixar e salvar imagens locais
 function downloadImage(url, filepath) {
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
@@ -18,7 +17,6 @@ function downloadImage(url, filepath) {
   });
 }
 
-// Função para exportar os dados em CSV (Excel)
 function exportToCSV(data, filename) {
   const headers = ['ID', 'Titulo', 'Preco', 'Disponibilidade', 'Arquivo_Imagem'];
   const rows = data.map((item) => {
@@ -31,10 +29,26 @@ function exportToCSV(data, filename) {
 }
 
 async function scrapeFullCatalog() {
-  const browser = await puppeteer.launch({ headless: true });
+  // 1. Inicia o navegador camuflando parâmetros de automação
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled' // Oculta a flag de robô
+    ]
+  });
+
   const page = await browser.newPage();
 
-  // Cria a pasta imagens/ se ela ainda não existir
+  // 2. Define uma resolução de ecrã real de desktop
+  await page.setViewport({ width: 1920, height: 1080 });
+
+  // 3. Define um User-Agent idêntico ao de um navegador humano
+  await page.setUserAgent(
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+  );
+
   const imagesDir = path.join(__dirname, 'imagens');
   if (!fs.existsSync(imagesDir)) {
     fs.mkdirSync(imagesDir);
@@ -42,14 +56,13 @@ async function scrapeFullCatalog() {
 
   let currentPageUrl = 'https://books.toscrape.com/';
   const allBooks = [];
-  const maxPages = 2; // Teste rápido em 2 páginas (40 produtos e 40 imagens baixadas)
+  const maxPages = 2;
   let pageCount = 1;
 
   while (currentPageUrl && pageCount <= maxPages) {
-    console.log(`\n--- Raspando página ${pageCount}: ${currentPageUrl} ---`);
+    console.log(`\n--- A extrair página ${pageCount}: ${currentPageUrl} ---`);
     await page.goto(currentPageUrl, { waitUntil: 'networkidle2' });
 
-    // Coleta dados e o link da capa de cada produto
     const booksOnPage = await page.$$eval('.product_pod', (elements) => {
       return elements.map((el) => {
         const title = el.querySelector('h3 a')?.getAttribute('title') || 'Sem título';
@@ -62,7 +75,6 @@ async function scrapeFullCatalog() {
       });
     });
 
-    // Baixa cada foto e vincula ao objeto do livro
     for (let i = 0; i < booksOnPage.length; i++) {
       const item = booksOnPage[i];
       const itemIndex = allBooks.length + 1;
@@ -74,7 +86,7 @@ async function scrapeFullCatalog() {
       try {
         await downloadImage(imageUrl, localFilePath);
       } catch (err) {
-        console.error(`Erro ao baixar imagem do item ${itemIndex}:`, err.message);
+        console.error(`Erro na imagem ${itemIndex}:`, err.message);
       }
 
       allBooks.push({
@@ -87,9 +99,8 @@ async function scrapeFullCatalog() {
       });
     }
 
-    console.log(`Página ${pageCount} concluída! Total até agora: ${allBooks.length} produtos.`);
+    console.log(`Página ${pageCount} concluída. Total: ${allBooks.length} produtos.`);
 
-    // Avança para a próxima página se houver
     const nextButton = await page.$('.pager .next a');
     if (nextButton) {
       const nextHref = await page.$eval('.pager .next a', (el) => el.getAttribute('href'));
@@ -100,16 +111,14 @@ async function scrapeFullCatalog() {
     }
   }
 
-  console.log(`\nProcessamento finalizado! Total de itens: ${allBooks.length}`);
+  console.log(`\nProcessamento finalizado! Total de itens recolhidos: ${allBooks.length}`);
 
-  // Salva arquivos locais
   fs.writeFileSync('produtos.json', JSON.stringify(allBooks, null, 2), 'utf-8');
-  console.log('produtos.json atualizado.');
-
   exportToCSV(allBooks, 'produtos.csv');
-  console.log('produtos.csv atualizado com os links locais das capas.');
+  console.log('Ficheiros produtos.json e produtos.csv atualizados com sucesso!');
 
   await browser.close();
 }
 
 scrapeFullCatalog();
+
